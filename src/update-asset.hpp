@@ -207,8 +207,16 @@ inline std::string assetDistroTag(const std::string &lowerName)
 	return {};
 }
 
-// The asset for `p`, or false. Debug-symbol bundles and source tarballs are
-// never it.
+// The zip that carries the plugin in OBS 33+'s own layout, for unpacking by
+// hand. The update helper expects the legacy layout, so it is never what the
+// updater downloads.
+inline bool isLayoutArchive(const std::string &lowerName)
+{
+	return contains(lowerName, "obs34-layout");
+}
+
+// The asset for `p`, or false. Debug-symbol bundles, source tarballs and the
+// hand-unpack layout zip are never it.
 //
 // `distro` is distroTag() of the machine asking, on Linux. An asset built for
 // ANOTHER Ubuntu release is refused, not ranked lower: its package names do not
@@ -226,7 +234,8 @@ inline bool pick(const std::vector<Asset> &assets, Platform p, Asset &out,
 			continue;
 		const std::string ln = lower(a.name);
 		if (contains(ln, "dbgsym") || contains(ln, "dsym") ||
-		    endsWith(ln, ".ddeb") || contains(ln, "source"))
+		    endsWith(ln, ".ddeb") || contains(ln, "source") ||
+		    isLayoutArchive(ln))
 			continue;
 
 		int extIdx = -1;

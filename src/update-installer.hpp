@@ -105,7 +105,7 @@ inline std::string paramFile(const Params &p)
 // The helper itself. A CONSTANT — grep it for a backslash and you will find
 // none that belongs to a path.
 //
-// THE RELEASE ZIP STAYS IN THE LEGACY LAYOUT (<plugin>/bin/64bit), although
+// THE UPDATE ZIP STAYS IN THE LEGACY LAYOUT (<plugin>/bin/64bit), although
 // OBS 33 prefers <plugin>/<plugin>.dll, and the reason is the helper that is
 // ALREADY INSTALLED: the copy built into 1.0.0 and every beta before it takes
 // the first obs-multireplay.dll the zip holds and climbs two folders. A DLL at
@@ -116,6 +116,13 @@ inline std::string paramFile(const Params &p)
 // is THIS helper, from 1.0.1 on, that puts the second copy in the new place.
 // The install tree is cmake/windows/helpers.cmake's — the template's file,
 // which is why this is written here and not there.
+//
+// OBS 34 DROPS bin/64bit, so what is unpacked by hand needs the new layout:
+// the release carries a SECOND zip (…-x64-obs34-layout.zip, built in
+// build-project.yaml) that is never picked by pick() — see
+// update_asset::isLayoutArchive — and, named without a platform word, ranks
+// below the legacy zip for the old helpers. The updater and the Inno installer
+// already leave both layouts on disk.
 //
 // IT RUNS IN THREE STAGES. "Install when OBS closes" shipped and never
 // installed anything; the cause was the launch flags (DETACHED_PROCESS, see

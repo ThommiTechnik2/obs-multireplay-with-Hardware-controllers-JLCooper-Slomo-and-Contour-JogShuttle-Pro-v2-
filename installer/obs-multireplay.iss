@@ -7,9 +7,10 @@
 ;     bin\64bit\obs-multireplay.dll  legacy layout, OBS 32 and earlier
 ;     data\                          shared by both
 ; OBS 33 loads the first and skips the second as a duplicate; OBS 32 and
-; earlier only look at the second. The zip cannot carry the first one (the
-; update helper inside 1.0.0 would mis-unpack it, see src/update-installer.hpp);
-; an installer has no such constraint. Portable OBS is not covered: use the zip.
+; earlier only look at the second; OBS 34 drops the second. The update zip
+; cannot carry the first one (the update helper inside 1.0.0 would mis-unpack
+; it, see src/update-installer.hpp); an installer has no such constraint.
+; Portable OBS is not covered: unpack the zip (…-obs34-layout.zip for OBS 33+).
 ;
 ; Built by CI (the Windows job in .github/workflows/build-project.yaml):
 ;   ISCC /DAppVersion=1.0.1-beta2 /DAppNumVersion=1.0.1 /DPkgDir=<install tree>

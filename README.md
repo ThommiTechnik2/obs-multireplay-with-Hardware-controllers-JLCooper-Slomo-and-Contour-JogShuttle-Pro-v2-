@@ -173,8 +173,9 @@ Generated from [`obs-compat.json`](obs-compat.json) by `tools/obs_compat.py`.
 closed. It installs into `%ProgramData%\obs-studio\plugins`, the only folder OBS
 searches on Windows, in both the OBS 33 layout and the older one, and uninstalls
 from **Apps & features** (your settings and recordings are kept). SmartScreen may
-warn about an unsigned installer: **More info ▸ Run anyway**. The `.zip` is still
-there for portable OBS or a manual install: extract it into that same folder.
+warn about an unsigned installer: **More info ▸ Run anyway**. For portable OBS or
+a manual install, extract a `.zip` into that same folder: `…-obs34-layout.zip`
+for OBS 33 and later (the only layout OBS 34 loads), the other one for OBS 32.
 **macOS:** the `.pkg` is not notarised — if the dock does not appear, run
 `xattr -dr com.apple.quarantine "$HOME/Library/Application Support/obs-studio/plugins/obs-multireplay.plugin"`
 and restart OBS.
@@ -412,8 +413,9 @@ chiuso. Installa in `%ProgramData%\obs-studio\plugins`, l'unica cartella in cui
 OBS cerca i plugin su Windows, sia nel layout di OBS 33 sia in quello precedente,
 e si disinstalla da **App e funzionalità** (impostazioni e registrazioni restano).
 SmartScreen può avvisare che l'installer non è firmato: **Ulteriori informazioni ▸
-Esegui comunque**. Lo `.zip` resta disponibile per OBS portable o per
-un'installazione manuale: estrailo in quella stessa cartella.
+Esegui comunque**. Per OBS portable o un'installazione manuale estrai uno
+`.zip` in quella stessa cartella: `…-obs34-layout.zip` per OBS 33 e successivi
+(l'unico layout che OBS 34 carica), l'altro per OBS 32.
 **macOS:** il `.pkg` non è notarizzato — se la dock non compare, esegui
 `xattr -dr com.apple.quarantine "$HOME/Library/Application Support/obs-studio/plugins/obs-multireplay.plugin"`
 e riavvia OBS.

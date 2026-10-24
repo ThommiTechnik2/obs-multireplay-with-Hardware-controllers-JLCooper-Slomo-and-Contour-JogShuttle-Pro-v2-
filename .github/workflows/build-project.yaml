@@ -520,6 +520,42 @@ jobs:
           "INSTALLER_VERSION=$Full" >> $env:GITHUB_ENV
           "INSTALL_TREE=$Tree" >> $env:GITHUB_ENV
 
+      # THE SECOND ZIP: the plugin in OBS 33+'s own layout, for people who
+      # unpack by hand (portable OBS, no installer). OBS 34 stops loading
+      # <plugin>/bin/64bit, so the legacy zip alone would not load there.
+      # It is a SEPARATE asset, and named without a platform word, on purpose:
+      # the update helper inside 1.0.0 and the early betas takes the first
+      # obs-multireplay.dll an archive holds and climbs two folders, so a DLL at
+      # the plugin folder's root would make it copy %TEMP% over the plugin
+      # (see src/update-installer.hpp). Those updaters pick the best-ranked
+      # asset, and "windows" in a name outranks a name with none, so they keep
+      # taking the legacy zip; the current updater skips this one by name
+      # (update_asset::isLayoutArchive).
+      - name: Build the OBS 33+ Layout Zip 🗜️
+        run: |
+          # Build the OBS 33+ Layout Zip 🗜️
+          $ErrorActionPreference = 'Stop'
+          $Tree = "${{ github.workspace }}/release/${{ needs.check-event.outputs.config }}/obs-multireplay"
+          $Stage = Join-Path $env:RUNNER_TEMP 'layout33'
+          if (Test-Path $Stage) { Remove-Item $Stage -Recurse -Force }
+          $Dest = Join-Path $Stage 'obs-multireplay'
+          New-Item -ItemType Directory -Force -Path $Stage | Out-Null
+          Copy-Item $Tree $Dest -Recurse
+          Get-ChildItem (Join-Path $Dest 'bin\64bit') | Move-Item -Destination $Dest
+          Remove-Item (Join-Path $Dest 'bin') -Recurse -Force
+          if (-not (Test-Path (Join-Path $Dest 'obs-multireplay.dll'))) { throw 'layout zip has no obs-multireplay.dll at the plugin root' }
+          if (Test-Path (Join-Path $Dest 'bin')) { throw 'layout zip still has a bin folder' }
+          $Zip = "${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-x64-obs34-layout.zip"
+          Compress-Archive -Path $Dest -DestinationPath $Zip -Force
+          # What is inside is what OBS will find: read the archive back.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $names = [IO.Compression.ZipFile]::OpenRead($Zip).Entries | ForEach-Object { $_.FullName -replace '\\', '/' }
+          foreach ($want in 'obs-multireplay/obs-multireplay.dll', 'obs-multireplay/data/locale/en-US.ini') {
+            if ($names -notcontains $want) { throw "layout zip is missing $want" }
+          }
+          if ($names | Where-Object { $_ -like '*bin/64bit*' }) { throw 'layout zip carries a bin/64bit entry' }
+          "ok: layout zip, $($names.Count) entries"
+
       # Not a build check: the installer is run for real on the runner, the way
       # an operator would, and what it leaves on disk is inspected. Install, then
       # again over it (the upgrade path), then uninstall. The runner has no OBS,
@@ -564,4 +600,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64-${{ needs.check-event.outputs.commitHash }}
-          path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64*.*
+          path: |
+            ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64*.*
+            ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-x64-obs34-layout.zip

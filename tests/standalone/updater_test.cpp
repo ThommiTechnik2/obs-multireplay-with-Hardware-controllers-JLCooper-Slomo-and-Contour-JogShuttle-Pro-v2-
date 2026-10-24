@@ -193,6 +193,35 @@ static void test_debug_symbols_and_sources_are_never_the_update()
 	CHECK(!pick(junk, Platform::Linux, out));
 }
 
+// The zip in OBS 33+'s layout is for unpacking by hand. The helper already
+// installed on operators' machines (1.0.0 and the early betas) takes the
+// best-ranked .zip and would mis-unpack a DLL at the plugin root, so the layout
+// zip must (a) never be chosen by this updater, and (b) rank BELOW the legacy
+// zip under the old rule: a platform word beats none, and the layout zip's
+// name carries none.
+static void test_the_layout_zip_is_never_the_update()
+{
+	using namespace update_asset;
+	const std::string layout = "obs-multireplay-1.0.2-x64-obs34-layout.zip";
+	CHECK(isLayoutArchive(layout));
+	CHECK(!isLayoutArchive("obs-multireplay-1.0.2-windows-x64.zip"));
+	CHECK(isSafeAssetName(layout));
+	CHECK(!namesPlatform(lower(layout), Platform::Windows));
+	CHECK(!namesAnotherPlatform(lower(layout), Platform::Windows));
+
+	const std::vector<Asset> both = {
+		{layout, "https://x/l", 1},
+		{"obs-multireplay-1.0.2-windows-x64.zip", "https://x/w", 2},
+	};
+	Asset out;
+	CHECK(pick(both, Platform::Windows, out));
+	CHECK(out.name == "obs-multireplay-1.0.2-windows-x64.zip");
+
+	// Alone it is still refused: handing it to the helper is the bug.
+	const std::vector<Asset> onlyLayout = {{layout, "https://x/l", 1}};
+	CHECK(!pick(onlyLayout, Platform::Windows, out));
+}
+
 static void test_an_unnamed_archive_still_works()
 {
 	using namespace update_asset;
@@ -702,6 +731,7 @@ int main()
 	test_each_ubuntu_gets_its_own_package();
 	test_another_platform_is_not_a_fallback();
 	test_debug_symbols_and_sources_are_never_the_update();
+	test_the_layout_zip_is_never_the_update();
 	test_an_unnamed_archive_still_works();
 	test_asset_names_that_are_paths_are_refused();
 	test_the_names_the_workflow_actually_published();
