@@ -31,6 +31,17 @@ if [ "$obs" = ppa ]; then
   apt-get install -y -qq obs-studio > /dev/null
 else
   . /etc/os-release
+  if [ "$obs" = latest ]; then
+    # The newest STABLE OBS that still publishes a .deb for THIS Ubuntu: OBS 33
+    # dropped 24.04, so "the newest stable" there is the last 32.x. Releases
+    # come newest first and a pre-release's file name has a suffix after the
+    # digits, so the pattern below never matches one.
+    obs="$(curl -fsSL "https://api.github.com/repos/obsproject/obs-studio/releases?per_page=40" \
+      | grep -oE "OBS-Studio-[0-9]+(\.[0-9]+)+-Ubuntu-${VERSION_ID}-x86_64\.deb" \
+      | head -1 | sed -E 's/^OBS-Studio-(.*)-Ubuntu-.*/\1/')"
+    [ -n "$obs" ] || { echo "::error::no stable OBS publishes a .deb for Ubuntu ${VERSION_ID}"; exit 1; }
+    echo "newest stable OBS with a .deb for Ubuntu ${VERSION_ID}: ${obs}"
+  fi
   deb="OBS-Studio-${obs}-Ubuntu-${VERSION_ID}-x86_64.deb"
   curl -fsSLO "https://github.com/obsproject/obs-studio/releases/download/${obs}/${deb}" \
     || { echo "::error::OBS ${obs} publishes no ${deb}"; exit 1; }

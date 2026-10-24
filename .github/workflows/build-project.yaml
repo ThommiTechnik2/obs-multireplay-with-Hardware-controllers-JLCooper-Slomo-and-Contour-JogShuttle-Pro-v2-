@@ -449,7 +449,9 @@ jobs:
           deb="$(ls packages/*-ubuntu-${{ matrix.ubuntu }}.deb | head -1)"
           [ -n "$deb" ] || { echo "::error::no package for Ubuntu ${{ matrix.ubuntu }}"; ls -R packages; exit 1; }
           case "${{ matrix.obs }}" in
-            stable) obs="$(sed -n 's/.*"max_tested": "\([^"]*\)".*/\1/p' obs-compat.json)" ;;
+            # OBS 33 has no 24.04 .deb: there, stable means the newest one that does.
+            stable) obs="$([ "${{ matrix.ubuntu }}" = 24.04 ] && echo latest || true)"
+              [ -n "$obs" ] || obs="$(sed -n 's/.*"max_tested": "\([^"]*\)".*/\1/p' obs-compat.json)" ;;
             beta) obs="$(sed -n 's/.*"beta_tested": "\([^"]*\)".*/\1/p' obs-compat.json)" ;;
             *) obs="${{ matrix.obs }}" ;;
           esac
