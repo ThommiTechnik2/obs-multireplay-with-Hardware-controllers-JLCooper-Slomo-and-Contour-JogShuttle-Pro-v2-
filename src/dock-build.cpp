@@ -279,6 +279,18 @@ QWidget *MultiReplayDock::buildToolbar()
 	// each name room.
 	listTabs_->setUsesScrollButtons(true);
 	listTabs_->setElideMode(Qt::ElideNone);
+	// The two arrows Qt adds when the tabs overflow are real buttons on
+	// screen, and they are born unnamed: a screen reader announces nothing.
+	for (const char *n : {"ScrollLeftButton", "ScrollRightButton"}) {
+		if (auto *sb = listTabs_->findChild<QAbstractButton *>(n)) {
+			const bool left = n[6] == 'L';
+			const QString what = QString::fromUtf8(obs_module_text(
+				left ? "Dock.ListTabsScrollLeft"
+				     : "Dock.ListTabsScrollRight"));
+			sb->setToolTip(what);
+			sb->setAccessibleName(what);
+		}
+	}
 	listTabs_->setFocusPolicy(Qt::NoFocus);
 	// Slightly smaller than the dock's font, and set on the WIDGET rather
 	// than in the stylesheet: this is the font the tabs are measured AND
