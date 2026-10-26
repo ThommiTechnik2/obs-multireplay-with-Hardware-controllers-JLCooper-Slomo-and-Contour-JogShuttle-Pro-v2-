@@ -212,6 +212,36 @@ void MultiReplayDock::updateChannelStrip()
 	if (statusSpeed_)
 		statusSpeed_->setText(QString::number(speedPct_ / 100.0, 'f', 2) +
 				      QChar(0x00D7));
+	// ── THE CAPTION UNDER A BAY, in the monitors' own dock ────────────────
+	// There the pictures are on their own, away from the on-air band, so the
+	// tag under the bay that is being driven also says what is in it: event,
+	// position inside the clip, speed. The bay that is not being driven keeps
+	// its bare letter. Only when the box is wide enough to carry the words —
+	// a clipped caption is worse than a short one.
+	if (monitorHost_ && labelA_ && labelB_ && aBox_ && bBox_) {
+		const int shownSpeed = ps.active ? ps.speedPct : speedPct_;
+		QString info;
+		if (haveEv) {
+			info = QStringLiteral("E") +
+			       QString::number(evId).rightJustified(idDigits, QLatin1Char('0')) +
+			       QStringLiteral("   ") + shortTc(clipPos - ev.tInNs) +
+			       QStringLiteral("   ");
+		}
+		info += QString::number(shownSpeed / 100.0, 'f', 2) + QChar(0x00D7);
+		const auto caption = [&info](const QString &letter, bool driven,
+					     int boxW) {
+			if (!driven)
+				return letter;
+			return boxW >= 220 ? letter + QStringLiteral("   ") + info
+					   : letter;
+		};
+		labelA_->setText(caption(QStringLiteral("A"),
+					 linkedAB_ || activeChannel_ == Which::A,
+					 aBox_->width()));
+		labelB_->setText(caption(QStringLiteral("B"),
+					 linkedAB_ || activeChannel_ == Which::B,
+					 bBox_->width()));
+	}
 	// clipPos and signedTc are still what the on-air band below is built from.
 	(void)clipPos;
 	(void)signedTc;
