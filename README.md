@@ -27,15 +27,15 @@ The panel adapts to the room it is given — three arrangements, one codebase, j
 </div>
 
 > [!TIP]
-> **1.0.0 is the first stable release.** As with any new tool in a gallery, run it
-> on a rehearsal before the first live match. Hit a
+> **This is a stable release.** As with any new tool in a gallery, run each new
+> version on a rehearsal before the first live match. Hit a
 > problem? [Open an issue](https://github.com/angeloruggieridj/obs-multireplay/issues/new)
 > and **attach the OBS log** (Help ▸ Log Files ▸ Show Log Files) — without it
 > almost nothing can be diagnosed.
 
 > [!TIP]
-> **La 1.0.0 è la prima release stabile.** Come per ogni strumento nuovo in regia,
-> provala su una prova generale prima della prima partita in diretta. Problemi?
+> **Questa è una release stabile.** Come per ogni strumento nuovo in regia,
+> provane ogni nuova versione su una prova generale prima della partita in diretta. Problemi?
 > [Apri una issue](https://github.com/angeloruggieridj/obs-multireplay/issues/new)
 > e **allega il log di OBS** (Aiuto ▸ File di log ▸ Mostra i file di log) — senza,
 > non si diagnostica quasi niente.
