@@ -38,7 +38,7 @@
   },
   "name": "obs-multireplay",
   "displayName": "OBS MultiReplay",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "_prereleaseComment": "Pre-release suffix WITHOUT the dash, e.g. beta9. Empty means a final release. It must agree with the release tag - push.yaml refuses to publish otherwise. See PLUGIN_VERSION_FULL in CMakeLists.txt. NOTE - no semicolons in this file - bootstrap.cmake expands it unquoted and a semicolon splits it into a list.",
   "prerelease": "",
   "author": "obs-multireplay contributors",

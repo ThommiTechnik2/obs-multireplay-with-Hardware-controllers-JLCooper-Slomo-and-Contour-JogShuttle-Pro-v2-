@@ -210,8 +210,8 @@ void MultiReplayDock::updateChannelStrip()
 		statusNotice_->setToolTip(notice ? noticeText_ : QString());
 	}
 	if (statusSpeed_)
-		statusSpeed_->setText(
-			QString::asprintf("%.2f\xc3\x97", speedPct_ / 100.0));
+		statusSpeed_->setText(QString::number(speedPct_ / 100.0, 'f', 2) +
+				      QChar(0x00D7));
 	// ── THE CAPTION UNDER A BAY, in the monitors' own dock ────────────────
 	// There the pictures are on their own, away from the on-air band, so the
 	// tag under the bay that is being driven also says what is in it: event,
@@ -905,8 +905,8 @@ void MultiReplayDock::poll()
 			speedPct_ = coordPct;
 			QSignalBlocker block(speed_);
 			speed_->setValue(coordPct);
-			speedLbl_->setText(QString::asprintf(
-				"%.2f\xc3\x97", coordPct / 100.0));
+			speedLbl_->setText(QString::number(coordPct / 100.0, 'f', 2) +
+					   QChar(0x00D7));
 		}
 		// the reference controller fills the preset that matches the speed in force. The
 		// property drives the QSS, so it is only repolished when it moves.
