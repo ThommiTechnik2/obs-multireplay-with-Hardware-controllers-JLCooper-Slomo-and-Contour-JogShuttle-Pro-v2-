@@ -126,6 +126,15 @@ jobs:
       - name: Every key the code asks for exists in every locale 🔤
         run: bash scripts/check-locale-keys.sh
 
+      # QString::asprintf reads the literal text of its format string as
+      # Latin-1, so UTF-8 bytes for a multiplication sign print as two wrong
+      # characters. It shipped in four places at once and the compiler cannot
+      # see it; this can.
+      - name: No UTF-8 bytes in a Latin-1 literal 🔡
+        run: |
+          python3 scripts/check-narrow-literals.py --self-test
+          python3 scripts/check-narrow-literals.py
+
   macos-build:
     name: Build for macOS 🍏
     runs-on: macos-15
