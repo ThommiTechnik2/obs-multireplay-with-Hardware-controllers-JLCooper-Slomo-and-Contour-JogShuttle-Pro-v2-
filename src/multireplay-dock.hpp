@@ -711,6 +711,25 @@ private:
 	// the row's arithmetic must not size — or cap — a block nobody can see.
 	bool monitorsOn_ = true;
 
+	// ── THE MONITORS IN A DOCK OF THEIR OWN ──────────────────────────────
+	// Non-null only when Config.monitorsInOwnDock was set at construction.
+	// The pictures are built exactly as before and are only PARENTED
+	// differently, before anything is shown — so no OBSQTDisplay is ever
+	// re-parented afterwards. The panel's own dock then holds the list and the
+	// keys, and leftCol_ stays hidden (see applyMonitorsRoom).
+	//
+	// With no window of its own to measure, the arrangement of the pictures
+	// follows this host's shape instead of the panel's PanelMode: stacked
+	// (bays on top, cameras under them) when it is tall enough, side by side
+	// when it is wide and shallow.
+	QWidget *monitorHost_ = nullptr;
+	bool monitorStacked_ = false;
+	bool monitorsStacked() const
+	{
+		return monitorHost_ ? monitorStacked_ : panelMode_ == PanelMode::Tall;
+	}
+	void applyMonitorHostLayout();
+
 	// ─── ⛶ THE PANEL TO THE WHOLE SCREEN, AND ONLY WHILE IT FLOATS ───────
 	//
 	// An operator who pulls this dock out onto a second monitor wants it to
@@ -1129,6 +1148,9 @@ public:
 	// that knows the arrangement can name, and naming it is the difference
 	// between a red line and an afternoon.
 	PanelMode panelMode() const { return panelMode_; }
+	// The widget that holds the monitoring block when Config.monitorsInOwnDock
+	// is on, else null. plugin-main registers it as a second dock.
+	QWidget *monitorHost() const { return monitorHost_; }
 	void applyTableDensity(int level);
 	// The comment editor is a delegate, and it lives outside this class: it
 	// needs the session vocabulary and the place a chosen word is remembered.
