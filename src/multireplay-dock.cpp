@@ -1219,6 +1219,11 @@ MultiReplayDock::MultiReplayDock(QWidget *parent) : QWidget(parent)
 			hl->setSpacing(0);
 			hl->addWidget(preview, 1);
 			mh->installEventFilter(this);
+			// The big bays get the taller naming band.
+			if (aBox_)
+				aBox_->setTagHeight(kBayTagHOwnDock);
+			if (bBox_)
+				bBox_->setTagHeight(kBayTagHOwnDock);
 			// The host can die BEFORE this panel (OBS removes docks in an order
 			// of its own), taking the displays with it. Everything that points
 			// into it is let go of first, while the host's own children are
@@ -1942,7 +1947,7 @@ void MultiReplayDock::applyPreviewAspect()
 		// side), then the SAME grid of cameras as the Wide layout under
 		// them — ceil(n/2) columns, up to two rows.
 		const int bayH =
-			aspectHeight((paneW - 3 * (bays - 1)) / bays) + tagH;
+			aspectHeight((paneW - 3 * (bays - 1)) / bays) + bayTagH();
 		int stripH = 0;
 		if (haveTiles) {
 			// THE TILES FILL THE ROW. The kTileMaxShare ceiling is
@@ -1981,7 +1986,8 @@ void MultiReplayDock::applyPreviewAspect()
 			// narrower than the space it was given, and the difference is
 			// the black band beside it.
 			const TileBlock tb = tileBlockFor(paneW, bays, visibleTiles,
-							  gap, monitorRoomH());
+							  gap, monitorRoomH(),
+							  bayTagH());
 			tb0 = tb;
 			tilesW = tb.blockW;
 			blockH = tb.blockH;
@@ -1994,7 +2000,7 @@ void MultiReplayDock::applyPreviewAspect()
 		// floated in a pane hundreds of pixels wider than itself.
 		const int bayW = haveTiles && tb0.bayW > 0
 					 ? tb0.bayW
-					 : aspectHeight(paneW / bays) + tagH;
+					 : aspectHeight(paneW / bays) + bayTagH();
 		int baysW = std::max(60, bays * bayW + 3 * (bays - 1));
 		if (haveTiles && baysW + tilesW + gap > paneW)
 			baysW = std::max(60, paneW - tilesW - gap);
@@ -2020,7 +2026,7 @@ void MultiReplayDock::applyPreviewAspect()
 			blockH = rows * (aspectHeight(tileCap_) + tagH) +
 				 (rows - 1) * kTileGap;
 		}
-		const int bayH = aspectHeight((baysW - 3 * (bays - 1)) / bays) + tagH;
+		const int bayH = aspectHeight((baysW - 3 * (bays - 1)) / bays) + bayTagH();
 		// monitorRoomH() is the ONE authority on how tall this block may be,
 		// and the tile arithmetic above was given the same number.
 		want = std::min(std::max(bayH, blockH), monitorRoomH());
@@ -2295,6 +2301,10 @@ void MultiReplayDock::applyTheme()
 		QString s = styleSheet();
 		s.replace(QStringLiteral("#MultiReplayDock"),
 			  QStringLiteral("#MultiReplayMonitors"));
+		// ...and the bay tags are twice as tall there, so their words can be
+		// twice as big. Appended, so it wins over the rule it overrides.
+		s += QStringLiteral(
+			"\nQLabel#mrChanTag { font-size: 15px; font-weight: 700; }\n");
 		monitorHost_->setStyleSheet(s);
 	}
 	applyTableDensity(cfg.tableDensity);

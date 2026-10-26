@@ -729,6 +729,15 @@ private:
 		return monitorHost_ ? monitorStacked_ : panelMode_ == PanelMode::Tall;
 	}
 	void applyMonitorHostLayout();
+	// The naming band under the two BIG pictures. In the monitors' own dock it
+	// is twice the tiles' (24 px against 12), so the event, the position and
+	// the speed can be read from across a desk; everywhere else it is the one
+	// shared number.
+	static constexpr int kBayTagHOwnDock = 24;
+	int bayTagH() const
+	{
+		return monitorHost_ ? kBayTagHOwnDock : AspectBox::kTagH;
+	}
 
 	// ─── ⛶ THE PANEL TO THE WHOLE SCREEN, AND ONLY WHILE IT FLOATS ───────
 	//

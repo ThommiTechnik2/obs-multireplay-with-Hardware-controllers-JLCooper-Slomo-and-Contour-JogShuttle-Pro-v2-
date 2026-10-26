@@ -216,7 +216,7 @@ void MultiReplayDock::updateChannelStrip()
 	// There the pictures are on their own, away from the on-air band, so the
 	// tag under the bay that is being driven also says what is in it: event,
 	// position inside the clip, speed. The bay that is not being driven keeps
-	// its bare letter. Only when the box is wide enough to carry the words —
+	// its bare letter. Only when the box is wide enough (320 px at the 15 px caption size) —
 	// a clipped caption is worse than a short one.
 	if (monitorHost_ && labelA_ && labelB_ && aBox_ && bBox_) {
 		const int shownSpeed = ps.active ? ps.speedPct : speedPct_;
@@ -232,7 +232,7 @@ void MultiReplayDock::updateChannelStrip()
 					     int boxW) {
 			if (!driven)
 				return letter;
-			return boxW >= 220 ? letter + QStringLiteral("   ") + info
+			return boxW >= 320 ? letter + QStringLiteral("   ") + info
 					   : letter;
 		};
 		labelA_->setText(caption(QStringLiteral("A"),
