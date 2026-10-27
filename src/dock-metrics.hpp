@@ -252,15 +252,16 @@ inline constexpr int kTileTagH = 12;
 // is wide and shallow, and an arrangement chosen from the width alone asks for
 // four rows of tiles in a pane with room for two. 0 = no limit.
 // `bayTagH` is the naming band under the BIG pictures, which is taller than
-// the tiles' in the monitors' own dock (see MultiReplayDock::bayTagH).
+// the tiles' in the monitors' own dock (see MultiReplayDock::bayTagH), and
+// `tileTagH` the band under each camera tile, which can differ from both.
 inline TileBlock tileBlockFor(int paneW, int bays, int n, int gap, int maxH = 0,
-			      int bayTagH = kTileTagH)
+			      int bayTagH = kTileTagH, int tileTagH = kTileTagH)
 {
 	TileBlock best;
 	if (n <= 0 || paneW <= 0 || bays <= 0)
 		return best;
 	const auto aspect = [](int w) { return std::max(1, w * 9 / 16); };
-	const int tagH = kTileTagH;
+	const int tagH = tileTagH;
 	// Proportional, not a constant: see kTileMaxShare.
 	const int ceiling =
 		std::max(kTileMinWidth, (int)(paneW * kTileMaxShare));
