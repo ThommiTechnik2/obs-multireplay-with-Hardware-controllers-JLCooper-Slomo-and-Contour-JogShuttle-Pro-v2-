@@ -1502,6 +1502,7 @@ private:
 	QLabel *statusNotice_ = nullptr;
 	QLabel *statusSpeed_ = nullptr;
 	QWidget *statusBar_ = nullptr;
+	uint32_t winLevelTick_ = 0;
 	// Whether the line is currently carrying a notice rather than the resting
 	// text. Kept so the restyle that goes with it happens on the CHANGE, not
 	// thirty times a second.
