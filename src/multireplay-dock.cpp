@@ -698,9 +698,9 @@ void SeekBar::paintEvent(QPaintEvent *)
 		p.setFont(zf);
 		p.setPen(QColor(zoomedIn ? sc().text : sc().textMuted));
 		const QString zlbl =
-			zoomedIn ? QString("%1\xc3\x97").arg(zoom_, 0, 'f',
+			zoomedIn ? QString(QStringLiteral("%1\u00D7")).arg(zoom_, 0, 'f',
 							      zoom_ < 10 ? 1 : 0)
-				 : QStringLiteral("1\xc3\x97");
+				 : QStringLiteral("1\u00D7");
 		p.drawText(zoomRect, Qt::AlignCenter, zlbl);
 	}
 
