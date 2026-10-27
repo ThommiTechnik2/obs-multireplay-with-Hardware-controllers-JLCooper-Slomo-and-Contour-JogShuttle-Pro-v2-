@@ -39,28 +39,47 @@ namespace multireplay {
 
 namespace {
 // RAM the ring could really use. libobs' os_get_sys_free_size() is the right
-// number on Windows and Linux, but on macOS it counts only the pages nothing
-// has touched — and macOS keeps those few on purpose, using the rest as file
-// cache it hands back the moment a program asks. A Mac with 16 GB and plenty
-// of room therefore reports a fraction of a gigabyte "free", and the preflight
-// refused to record. Free + inactive + purgeable is what Activity Monitor calls
-// available (inactive pages are clean or swappable, purgeable ones are given up
-// on request).
+// number on Windows (ullAvailPhys already counts reusable cache), but not
+// elsewhere: on macOS it counts only the pages nothing has touched, and on
+// Linux only freeram + bufferram, which leaves out the page cache. Both
+// systems keep those few on purpose and hand the cache back the moment a
+// program asks, so a machine with 16 GB and plenty of room reports a fraction
+// of a gigabyte "free" and the preflight refuses to record or shortens the ring.
+// macOS: free + inactive + purgeable is what Activity Monitor calls available
+// (inactive pages are clean or swappable, purgeable ones are given up on
+// request). Linux: MemAvailable, the kernel's own estimate.
 uint64_t availableRamBytes()
 {
 #ifdef __APPLE__
 	vm_statistics64_data_t vm{};
 	mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-	if (host_statistics64(mach_host_self(), HOST_VM_INFO64,
-			      (host_info64_t)&vm, &count) == KERN_SUCCESS) {
-		vm_size_t page = 0;
-		if (host_page_size(mach_host_self(), &page) == KERN_SUCCESS &&
-		    page > 0) {
-			const uint64_t pages = (uint64_t)vm.free_count +
-					       (uint64_t)vm.inactive_count +
-					       (uint64_t)vm.purgeable_count;
-			return pages * (uint64_t)page;
+	// mach_host_self() takes a send-right reference on every call.
+	const mach_port_t host = mach_host_self();
+	uint64_t bytes = 0;
+	vm_size_t page = 0;
+	if (host_statistics64(host, HOST_VM_INFO64, (host_info64_t)&vm,
+			      &count) == KERN_SUCCESS &&
+	    host_page_size(host, &page) == KERN_SUCCESS && page > 0) {
+		const uint64_t pages = (uint64_t)vm.free_count +
+				       (uint64_t)vm.inactive_count +
+				       (uint64_t)vm.purgeable_count;
+		bytes = pages * (uint64_t)page;
+	}
+	mach_port_deallocate(mach_task_self(), host);
+	if (bytes > 0)
+		return bytes;
+#elif defined(__linux__)
+	if (FILE *f = fopen("/proc/meminfo", "r")) {
+		char line[128];
+		unsigned long long kb = 0;
+		while (fgets(line, sizeof line, f)) {
+			if (sscanf(line, "MemAvailable: %llu kB", &kb) == 1)
+				break;
+			kb = 0;
 		}
+		fclose(f);
+		if (kb > 0)
+			return (uint64_t)kb * 1024;
 	}
 #endif
 	return os_get_sys_free_size();
