@@ -28,7 +28,7 @@ public:
 		QString delay = QStringLiteral("LIVE"); // "-00:00:30:00" when behind
 		bool live = true;
 		bool markOpen = false; // an IN without its OUT: the IN key is lit
-		QString rate = QStringLiteral("1.00×");
+		QString rate = QStringLiteral("100%");
 		bool operator==(const State &o) const
 		{
 			return clock == o.clock && delay == o.delay &&

@@ -238,15 +238,19 @@ void MultiReplayDock::updateChannelStrip()
 		const int64_t behind = (edge > 0 && playheadNs_ != kNoInstant)
 					       ? edge - playheadNs_
 					       : 0;
-		hs.live = behind < 250000000;
-		hs.delay = hs.live ? QStringLiteral("LIVE")
-				   : QStringLiteral("-") + tcFrames(behind / 1000000);
-		ReplayEvent lastEv;
-		const int lastId = store.lastEventId();
-		hs.markOpen = lastId > 0 && store.get(lastId, lastEv) &&
-			      lastEv.tOutNs == kNoInstant;
-		hs.rate = QString::number((ps.active ? ps.speedPct : speedPct_) / 100.0,
-					  'f', 2) + QChar(0x00D7);
+		if (ps.active && haveEv) {
+			// A clip is running: say where we are INSIDE it.
+			hs.live = false;
+			hs.delay = tcFrames((clipPos - ev.tInNs) / 1000000);
+		} else {
+			hs.live = behind < 250000000;
+			hs.delay = hs.live ? QStringLiteral("LIVE")
+					   : QStringLiteral("-") +
+						     tcFrames(behind / 1000000);
+		}
+		hs.markOpen = store.hasOpenEvent();
+		hs.rate = QString::number(ps.active ? ps.speedPct : speedPct_) +
+			  QChar('%');
 		header_->setState(hs);
 	}
 	// ── THE CAPTION UNDER A BAY, in the monitors' own dock ────────────────
