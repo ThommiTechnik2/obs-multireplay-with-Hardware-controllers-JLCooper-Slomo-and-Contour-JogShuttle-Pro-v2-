@@ -1505,6 +1505,7 @@ private:
 	QWidget *statusBar_ = nullptr;
 	// The viewer header across the top (clock, IN/OUT, delay, rate).
 	ReplayHeader *header_ = nullptr;
+	uint32_t winLevelTick_ = 0;
 	QPushButton *markInBtn_ = nullptr;
 	QPushButton *markOutBtn_ = nullptr;
 	// Whether the line is currently carrying a notice rather than the resting

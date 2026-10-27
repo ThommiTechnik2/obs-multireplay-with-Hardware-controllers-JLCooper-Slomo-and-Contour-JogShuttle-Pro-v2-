@@ -12,6 +12,7 @@ translation units keeps each concern reviewable on its own.
 */
 
 #include "multireplay-dock.hpp"
+#include "dock-native-mac.hpp"
 #include "angle-channels.hpp"
 #include "dock-internal.hpp"
 #include "dock-layout.hpp"
@@ -615,6 +616,15 @@ void MultiReplayDock::poll()
 	auto &core = ReplayCore::instance();
 	auto &chan = this->chan();
 	auto &tap = PacketTap::instance();
+
+	// The monitors' dock, once it floats, is kept on the NORMAL window level
+	// (macOS), so other windows can be brought in front of it. Re-applied about
+	// once a second: Qt sets the level again whenever the window is re-shown or
+	// the dock is floated and docked.
+	if (monitorHost_ && (winLevelTick_++ % 30) == 0)
+		mrMakeWindowNormalLevel(
+			monitorHost_,
+			static_cast<QWidget *>(obs_frontend_get_main_window()));
 
 	// The preview's obs_display is bound to a native window handle, and OBS
 	// re-parents its docks whenever the layout is restored, floated, tabbed or
