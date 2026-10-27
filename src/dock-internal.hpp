@@ -501,12 +501,12 @@ inline QWidget *zoneBox(const QString &title, QWidget *content, QWidget *parent)
 // an aspect-ratio bug can live.
 //
 // Runs on the OBS graphics thread. It must not look anything up.
-inline void renderSourceFitted(obs_source_t *src, uint32_t cx, uint32_t cy)
+inline FitRect renderSourceFitted(obs_source_t *src, uint32_t cx, uint32_t cy)
 {
 	const uint32_t sw = obs_source_get_width(src);
 	const uint32_t sh = obs_source_get_height(src);
 	if (sw == 0 || sh == 0)
-		return;
+		return FitRect{};
 	// Fit inside the widget preserving aspect ratio; bars (black) appear on
 	// whichever axis has excess space.
 	const float scale = std::min((float)cx / (float)sw, (float)cy / (float)sh);
@@ -522,6 +522,7 @@ inline void renderSourceFitted(obs_source_t *src, uint32_t cx, uint32_t cy)
 	obs_source_video_render(src);
 	gs_projection_pop();
 	gs_viewport_pop();
+	return FitRect{x, y, dw, dh};
 }
 
 // ---------------------------------------------------------------------------

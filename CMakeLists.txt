@@ -174,6 +174,8 @@ target_sources(
     src/dock-layout.cpp
     src/dock-layout.hpp
     src/dock-header.hpp
+    src/display-overlay.hpp
+    src/display-overlay.cpp
     src/dock-native-mac.hpp
     src/dock-metrics.hpp
     src/dock-style.hpp
