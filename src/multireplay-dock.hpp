@@ -738,6 +738,12 @@ private:
 	{
 		return monitorHost_ ? kBayTagHOwnDock : AspectBox::kTagH;
 	}
+	// ...and the camera tiles' band, 18 px there (the default 12 elsewhere).
+	static constexpr int kTileTagHOwnDock = 18;
+	int tileTagH() const
+	{
+		return monitorHost_ ? kTileTagHOwnDock : AspectBox::kTagH;
+	}
 
 	// ─── ⛶ THE PANEL TO THE WHOLE SCREEN, AND ONLY WHILE IT FLOATS ───────
 	//

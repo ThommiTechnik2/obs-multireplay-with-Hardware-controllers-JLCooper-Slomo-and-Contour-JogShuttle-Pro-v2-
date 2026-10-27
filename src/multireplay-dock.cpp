@@ -1224,6 +1224,9 @@ MultiReplayDock::MultiReplayDock(QWidget *parent) : QWidget(parent)
 				aBox_->setTagHeight(kBayTagHOwnDock);
 			if (bBox_)
 				bBox_->setTagHeight(kBayTagHOwnDock);
+			for (PreviewTile &t : tiles_)
+				if (t.box)
+					t.box->setTagHeight(kTileTagHOwnDock);
 			// The host can die BEFORE this panel (OBS removes docks in an order
 			// of its own), taking the displays with it. Everything that points
 			// into it is let go of first, while the host's own children are
@@ -1939,7 +1942,7 @@ void MultiReplayDock::applyPreviewAspect()
 	const int cols = haveTiles ? std::max(1, tileColumns(visibleTiles)) : 1;
 	tileCap_ = kTileMinWidth;
 	const int rows = haveTiles ? (visibleTiles + cols - 1) / cols : 0;
-	const int tagH = AspectBox::kTagH;
+	const int tagH = tileTagH();
 
 	int want = 0;
 	if (monitorsStacked()) {
@@ -1987,7 +1990,7 @@ void MultiReplayDock::applyPreviewAspect()
 			// the black band beside it.
 			const TileBlock tb = tileBlockFor(paneW, bays, visibleTiles,
 							  gap, monitorRoomH(),
-							  bayTagH());
+							  bayTagH(), tileTagH());
 			tb0 = tb;
 			tilesW = tb.blockW;
 			blockH = tb.blockH;
@@ -2304,7 +2307,8 @@ void MultiReplayDock::applyTheme()
 		// ...and the bay tags are twice as tall there, so their words can be
 		// twice as big. Appended, so it wins over the rule it overrides.
 		s += QStringLiteral(
-			"\nQLabel#mrChanTag { font-size: 15px; font-weight: 700; }\n");
+			"\nQLabel#mrChanTag { font-size: 15px; font-weight: 700; }\n"
+			"QLabel#mrTileCap { font-size: 12px; }\n");
 		monitorHost_->setStyleSheet(s);
 	}
 	applyTableDensity(cfg.tableDensity);
