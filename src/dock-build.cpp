@@ -1860,8 +1860,10 @@ KeyBlock *MultiReplayDock::buildMarkers()
 	// that mark a point and put nothing on air.
 	auto *in = compactBtn(obs_module_text("Dock.MarkIn"), this);
 	setKeyId(in, QStringLiteral("markIn"));
+	markInBtn_ = in;
 	auto *out = compactBtn(obs_module_text("Dock.MarkOut"), this);
 	setKeyId(out, QStringLiteral("markOut"));
+	markOutBtn_ = out;
 	connect(in, &QPushButton::clicked, this, [this]() {
 		const int64_t t = markTimeNs();
 		if (!markable(t))
