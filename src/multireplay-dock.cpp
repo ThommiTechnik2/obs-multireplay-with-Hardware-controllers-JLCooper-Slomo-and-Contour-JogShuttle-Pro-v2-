@@ -1031,7 +1031,8 @@ void MultiReplayDock::drawChannelA(void *data, uint32_t cx, uint32_t cy)
 	}
 	if (!src)
 		return;
-	renderSourceFitted(src, cx, cy);
+	const FitRect fit = renderSourceFitted(src, cx, cy);
+	self->overlayA_.draw(fit);
 	obs_source_release(src);
 }
 
@@ -1054,7 +1055,8 @@ void MultiReplayDock::drawChannelB(void *data, uint32_t cx, uint32_t cy)
 	}
 	if (!src)
 		return;
-	renderSourceFitted(src, cx, cy);
+	const FitRect fit = renderSourceFitted(src, cx, cy);
+	self->overlayB_.draw(fit);
 	obs_source_release(src);
 }
 

@@ -18,6 +18,7 @@ start.
 #pragma once
 
 #include "dock-header.hpp"
+#include "display-overlay.hpp"
 #include "dock-layout.hpp"
 #include "dock-style.hpp"
 
@@ -1658,6 +1659,12 @@ private:
 	// kNoInstant, not 0: this is an instant on the master clock and instants
 	// go negative for footage older than the machine's last boot.
 	int64_t playheadNs_ = kNoInstant;
+
+	// Text drawn into the pictures of the two bays (see display-overlay.hpp).
+	// Filled by updatePictureOverlays() in poll; drawn by the draw callbacks.
+	DisplayOverlay overlayA_;
+	DisplayOverlay overlayB_;
+	void updatePictureOverlays();
 
 	// --- THE FREE REVIEW: footage nobody marked ---------------------------
 	// Where the bar was when the operator asked to watch a stretch that no
