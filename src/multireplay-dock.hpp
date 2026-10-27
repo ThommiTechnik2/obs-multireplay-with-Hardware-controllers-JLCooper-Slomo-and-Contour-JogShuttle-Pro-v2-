@@ -17,6 +17,7 @@ start.
 
 #pragma once
 
+#include "dock-header.hpp"
 #include "dock-layout.hpp"
 #include "dock-style.hpp"
 
@@ -1502,6 +1503,10 @@ private:
 	QLabel *statusNotice_ = nullptr;
 	QLabel *statusSpeed_ = nullptr;
 	QWidget *statusBar_ = nullptr;
+	// The viewer header across the top (clock, IN/OUT, delay, rate).
+	ReplayHeader *header_ = nullptr;
+	QPushButton *markInBtn_ = nullptr;
+	QPushButton *markOutBtn_ = nullptr;
 	// Whether the line is currently carrying a notice rather than the resting
 	// text. Kept so the restyle that goes with it happens on the CHANGE, not
 	// thirty times a second.

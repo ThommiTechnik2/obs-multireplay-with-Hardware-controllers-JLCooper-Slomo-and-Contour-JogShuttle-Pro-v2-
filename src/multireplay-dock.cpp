@@ -1157,6 +1157,18 @@ MultiReplayDock::MultiReplayDock(QWidget *parent) : QWidget(parent)
 	root->setContentsMargins(4, 4, 4, 4);
 	root->setSpacing(3);
 
+	// THE VIEWER HEADER, first thing in the panel (hidden in Short).
+	header_ = new ReplayHeader(this);
+	header_->onIn = [this]() {
+		if (markInBtn_)
+			markInBtn_->click();
+	};
+	header_->onOut = [this]() {
+		if (markOutBtn_)
+			markOutBtn_->click();
+	};
+	root->addWidget(header_);
+
 	// Helper: 1px separator line (each call returns a fresh widget).
 	auto mkSep = [this]() -> QWidget * {
 		auto *s = new QWidget(this);
@@ -1568,6 +1580,8 @@ void MultiReplayDock::applyPanelMode(PanelMode m, bool force)
 	// left. The strip carries no picture, so moving it between the two layouts
 	// costs a relayout and nothing else.
 	applyControlsColumn(m == PanelMode::Short);
+	if (header_)
+		header_->setVisible(m != PanelMode::Short);
 
 	// THE DIVIDERS THE OPERATOR CHOSE FOR *THIS* ARRANGEMENT, put back. After
 	// the orientations, never before: a saved state applied to a splitter that

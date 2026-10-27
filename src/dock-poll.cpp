@@ -37,6 +37,7 @@ translation units keeps each concern reviewable on its own.
 #include <obs-frontend-api.h> // obs_frontend_get_scenes (output-scene picker)
 #include <util/platform.h>    // os_gettime_ns (arm watchdog deadline)
 
+#include <QTime>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -212,6 +213,42 @@ void MultiReplayDock::updateChannelStrip()
 	if (statusSpeed_)
 		statusSpeed_->setText(QString::number(speedPct_ / 100.0, 'f', 2) +
 				      QChar(0x00D7));
+	// ── THE VIEWER HEADER: clock, delay behind live, open IN, rate ─────────
+	if (header_ && header_->isVisible()) {
+		obs_video_info ovi{};
+		double fps = 25.0;
+		if (obs_get_video_info(&ovi) && ovi.fps_den > 0 && ovi.fps_num > 0)
+			fps = (double)ovi.fps_num / (double)ovi.fps_den;
+		const int fpsI = std::max(1, (int)std::lround(fps));
+		const auto tcFrames = [fpsI](int64_t totalMs) {
+			const int64_t s = totalMs / 1000;
+			const int ff = (int)((totalMs % 1000) * fpsI / 1000);
+			return QString::asprintf("%02d:%02d:%02d:%02d",
+						 (int)(s / 3600),
+						 (int)((s / 60) % 60),
+						 (int)(s % 60), ff);
+		};
+		ReplayHeader::State hs;
+		const QTime now = QTime::currentTime();
+		hs.clock = tcFrames((int64_t)now.msecsSinceStartOfDay());
+		// Behind live: the distance from the playhead to the newest frame
+		// of the angle in view. Within a quarter second of the edge, or with
+		// nothing cued, it is LIVE.
+		const int64_t edge = PacketTap::instance().newestNs(currentAngle1() - 1);
+		const int64_t behind = (edge > 0 && playheadNs_ != kNoInstant)
+					       ? edge - playheadNs_
+					       : 0;
+		hs.live = behind < 250000000;
+		hs.delay = hs.live ? QStringLiteral("LIVE")
+				   : QStringLiteral("-") + tcFrames(behind / 1000000);
+		ReplayEvent lastEv;
+		const int lastId = store.lastEventId();
+		hs.markOpen = lastId > 0 && store.get(lastId, lastEv) &&
+			      lastEv.tOutNs == kNoInstant;
+		hs.rate = QString::number((ps.active ? ps.speedPct : speedPct_) / 100.0,
+					  'f', 2) + QChar(0x00D7);
+		header_->setState(hs);
+	}
 	// ── THE CAPTION UNDER A BAY, in the monitors' own dock ────────────────
 	// There the pictures are on their own, away from the on-air band, so the
 	// tag under the bay that is being driven also says what is in it: event,
