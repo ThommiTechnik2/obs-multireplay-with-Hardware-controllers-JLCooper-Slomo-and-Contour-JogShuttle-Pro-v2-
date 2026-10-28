@@ -448,6 +448,18 @@ int EventStore::duplicate(int id)
 	return 0;
 }
 
+bool EventStore::hasOpenEvent() const
+{
+	std::lock_guard<std::mutex> lock(mutex_);
+	for (const auto &ev : events_)
+		if (ev.list == selectedList_ &&
+		    (ev.tOutNs == kNoInstant ||
+		     (ev.inPending &&
+		      steadyNowNs() - ev.pendingSinceNs <= kOutFirstWaitNs)))
+			return true;
+	return false;
+}
+
 int EventStore::lastEventId() const
 {
 	std::lock_guard<std::mutex> lock(mutex_);

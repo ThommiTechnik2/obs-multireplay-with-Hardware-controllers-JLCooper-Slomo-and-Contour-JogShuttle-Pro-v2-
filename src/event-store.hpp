@@ -154,6 +154,9 @@ public:
 
 	// Most recent event by time (the reference controller "last event"), 0 if none.
 	int lastEventId() const;
+	// An IN with no OUT yet in the selected list (what markOut would close),
+	// or an OUT-first event still waiting for its IN.
+	bool hasOpenEvent() const;
 	bool get(int id, ReplayEvent &out) const;
 
 	// JSON of one list's events (for the web UI).
