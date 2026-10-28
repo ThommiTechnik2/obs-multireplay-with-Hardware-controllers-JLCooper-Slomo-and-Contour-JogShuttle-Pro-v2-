@@ -366,7 +366,7 @@ QWidget *MultiReplayDock::buildPreview()
 	{
 		displayA_ = new OBSQTDisplay(aBox_);
 		displayA_->setRenderCallback(&MultiReplayDock::drawChannelA, this);
-		labelA_ = new QLabel(QStringLiteral("A"), aBox_);
+		labelA_ = new QLabel(QString(), aBox_);
 		labelA_->setObjectName("mrChanTag");
 		labelA_->setProperty("chan", QStringLiteral("A"));
 		labelA_->setProperty("active", true); // A is where the panel starts
@@ -377,7 +377,7 @@ QWidget *MultiReplayDock::buildPreview()
 	{
 		displayB_ = new OBSQTDisplay(bBox_);
 		displayB_->setRenderCallback(&MultiReplayDock::drawChannelB, this);
-		labelB_ = new QLabel(QStringLiteral("B"), bBox_);
+		labelB_ = new QLabel(QString(), bBox_);
 		labelB_->setObjectName("mrChanTag");
 		labelB_->setProperty("chan", QStringLiteral("B"));
 		labelB_->setProperty("active", false);

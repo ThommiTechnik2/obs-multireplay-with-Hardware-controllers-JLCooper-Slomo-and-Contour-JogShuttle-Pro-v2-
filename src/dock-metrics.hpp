@@ -243,7 +243,7 @@ inline constexpr int kTileGap = 4;
 // in the height every tile carries. It is the same band AspectBox draws under
 // a monitor: dock-layout.hpp aliases its kTagH to this number, so the two can
 // never drift apart.
-inline constexpr int kTileTagH = 12;
+inline constexpr int kTileTagH = 5;
 
 // `paneW` is the whole monitoring pane, `bays` how many big pictures share it,
 // `n` the configured cameras. `maxH` is how much HEIGHT the block may actually

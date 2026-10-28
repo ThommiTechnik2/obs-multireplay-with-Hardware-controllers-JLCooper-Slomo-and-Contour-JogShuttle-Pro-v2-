@@ -156,7 +156,7 @@ void DisplayOverlay::setContent(const Content &c, int pictureHeightPx)
 		return;
 	}
 
-	const int px = std::clamp((int)std::lround(pictureHeightPx * 0.055), 10, 40);
+	const int px = std::clamp((int)std::lround(pictureHeightPx * 0.055), 8, 40);
 
 	Content old;
 	int oldPx;

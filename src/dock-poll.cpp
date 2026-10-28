@@ -254,36 +254,8 @@ void MultiReplayDock::updateChannelStrip()
 			  QChar('%');
 		header_->setState(hs);
 	}
-	// ── THE CAPTION UNDER A BAY, in the monitors' own dock ────────────────
-	// There the pictures are on their own, away from the on-air band, so the
-	// tag under the bay that is being driven also says what is in it: event,
-	// position inside the clip, speed. The bay that is not being driven keeps
-	// its bare letter. Only when the box is wide enough (320 px at the 15 px caption size) —
-	// a clipped caption is worse than a short one.
-	if (monitorHost_ && labelA_ && labelB_ && aBox_ && bBox_) {
-		const int shownSpeed = ps.active ? ps.speedPct : speedPct_;
-		QString info;
-		if (haveEv) {
-			info = QStringLiteral("E") +
-			       QString::number(evId).rightJustified(idDigits, QLatin1Char('0')) +
-			       QStringLiteral("   ") + shortTc(clipPos - ev.tInNs) +
-			       QStringLiteral("   ");
-		}
-		info += QString::number(shownSpeed / 100.0, 'f', 2) + QChar(0x00D7);
-		const auto caption = [&info](const QString &letter, bool driven,
-					     int boxW) {
-			if (!driven)
-				return letter;
-			return boxW >= 320 ? letter + QStringLiteral("   ") + info
-					   : letter;
-		};
-		labelA_->setText(caption(QStringLiteral("A"),
-					 linkedAB_ || activeChannel_ == Which::A,
-					 aBox_->width()));
-		labelB_->setText(caption(QStringLiteral("B"),
-					 linkedAB_ || activeChannel_ == Which::B,
-					 bBox_->width()));
-	}
+	// (The caption under each bay is gone: event, position and speed are
+	// printed inside the picture now — see updatePictureOverlays().)
 	// clipPos and signedTc are still what the on-air band below is built from.
 	(void)clipPos;
 	(void)signedTc;
@@ -2240,6 +2212,35 @@ void MultiReplayDock::updatePictureOverlays()
 	};
 	one(Which::A, displayA_, overlayA_);
 	one(Which::B, displayB_, overlayB_);
+
+	// The camera tiles: camera number top left, name in the middle, and the
+	// time of day of the live picture bottom left (they show live cameras).
+	const QDateTime nowDt = QDateTime::currentDateTime();
+	const int nowFf = (nowDt.time().msec() * fpsI) / 1000;
+	const QString nowTc = QString::asprintf(
+		"%02d:%02d:%02d:%02d", nowDt.time().hour(), nowDt.time().minute(),
+		nowDt.time().second(), nowFf);
+	for (int i = 0; i < kMaxPreviewTiles; i++) {
+		const PreviewTile &t = tiles_[i];
+		DisplayOverlay::Content c;
+		if (!t.display || t.cam0 < 0 || t.cam0 >= kMaxCameras ||
+		    !t.display->isVisible()) {
+			overlayTile_[i].setContent(c, 0);
+			continue;
+		}
+		const QSize px = t.display->devicePixelSize();
+		const int picH = std::min(px.height(), px.width() * 9 / 16);
+		c.visible = true;
+		c.rec = false;
+		c.topLeft = QString::number(t.cam0 + 1);
+		const std::string &dn = cfg.cameras[t.cam0].displayName;
+		c.name = dn.empty() ? QString("Cam %1").arg(t.cam0 + 1)
+				    : QString::fromStdString(dn);
+		// Too narrow for the time and the name side by side: name only.
+		if (px.width() >= 420)
+			c.time = nowTc;
+		overlayTile_[i].setContent(c, picH);
+	}
 }
 
 } // namespace multireplay
