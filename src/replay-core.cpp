@@ -67,6 +67,21 @@ constexpr const char *kEncoderPreference[] = {
 	"obs_x264",           // software fallback
 };
 
+// 10-bit capable encoders (HEVC / AV1), used when OBS runs a 10-bit format.
+constexpr const char *kTenBitEncoderPreference[] = {
+	"obs_nvenc_hevc_tex",
+	"jim_hevc_nvenc",
+	"obs_qsv11_hevc",
+	"h265_texture_amf",
+	"com.apple.videotoolbox.videoencoder.ave.hevc", // Apple HEVC hardware
+	"com.apple.videotoolbox.videoencoder.hevc.vcp", // Apple HEVC software
+	"obs_nvenc_av1_tex",
+	"obs_qsv11_av1",
+	"av1_texture_amf",
+	"ffmpeg_svt_av1",
+	"ffmpeg_aom_av1",
+};
+
 bool encoderExists(const char *id)
 {
 	const char *existingId = nullptr;
@@ -876,8 +891,37 @@ void ReplayCore::setConfig(const Config &cfg)
 	}
 }
 
+bool ReplayCore::obsOutputIsTenBit()
+{
+	struct obs_video_info ovi;
+	if (!obs_get_video_info(&ovi))
+		return false;
+	switch (ovi.output_format) {
+	case VIDEO_FORMAT_I010:
+	case VIDEO_FORMAT_P010:
+	case VIDEO_FORMAT_I210:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool ReplayCore::encoderSupportsTenBit(const std::string &id)
+{
+	// H.264 hardware/software encoders are 8-bit only. HEVC and AV1 take 10-bit.
+	return id.find("hevc") != std::string::npos ||
+	       id.find("av1") != std::string::npos ||
+	       id.find("h265") != std::string::npos;
+}
+
 std::string ReplayCore::pickVideoEncoder() const
 {
+	if (obsOutputIsTenBit()) {
+		for (const char *id : kTenBitEncoderPreference) {
+			if (encoderExists(id))
+				return id;
+		}
+	}
 	for (const char *id : kEncoderPreference) {
 		if (encoderExists(id))
 			return id;

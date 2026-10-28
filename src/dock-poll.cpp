@@ -553,10 +553,12 @@ void MultiReplayDock::cancelDeadRecording()
 	// nested event loop on top of a running poll tick, re-entering the whole
 	// refresh (and its table rebuild) from within itself. Queued, it opens on
 	// a clean stack, with `this` as context so a closed dock cancels it.
-	QTimer::singleShot(0, this, [this]() {
+	const bool tenBit = ReplayCore::obsOutputIsTenBit();
+	QTimer::singleShot(0, this, [this, tenBit]() {
 		QMessageBox::warning(
 			this, obs_module_text("Dock.RecNotStartedTitle"),
-			obs_module_text("Dock.RecNotStarted"));
+			obs_module_text(tenBit ? "Dock.RecNotStarted10Bit"
+					       : "Dock.RecNotStarted"));
 	});
 }
 

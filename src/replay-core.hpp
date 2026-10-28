@@ -332,6 +332,10 @@ public:
 
 	// Best available encoder: hardware first, x264 fallback.
 	std::string pickVideoEncoder() const;
+	// OBS's video format (Settings > Advanced) is a 10-bit one (P010/I010/I210...).
+	// Then only HEVC/AV1 encoders can record; H.264 refuses the colour format.
+	static bool obsOutputIsTenBit();
+	static bool encoderSupportsTenBit(const std::string &id);
 
 	// Disk space remaining in session folder (bytes), -1 if unknown.
 	int64_t diskFreeBytes() const;

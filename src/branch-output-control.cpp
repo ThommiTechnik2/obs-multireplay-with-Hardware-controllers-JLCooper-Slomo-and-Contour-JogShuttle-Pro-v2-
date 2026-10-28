@@ -135,6 +135,11 @@ obs_data_t *buildSettings(int camIndex, const Config &cfg)
 	std::string encoderId = cfg.videoEncoderId.empty()
 					? ReplayCore::instance().pickVideoEncoder()
 					: cfg.videoEncoderId;
+	// A 10-bit OBS video format cannot be recorded by an H.264 encoder
+	// ("Unsupported color format selected"): switch to an HEVC/AV1 one.
+	if (ReplayCore::obsOutputIsTenBit() &&
+	    !ReplayCore::encoderSupportsTenBit(encoderId))
+		encoderId = ReplayCore::instance().pickVideoEncoder();
 	obs_data_set_string(settings, "video_encoder", encoderId.c_str());
 	obs_data_set_int(settings, "bitrate", cfg.videoBitrateKbps);
 	// Short GOP (1s) keeps future frame-accurate seeking cheap (M2).
