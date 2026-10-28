@@ -501,6 +501,25 @@ inline QWidget *zoneBox(const QString &title, QWidget *content, QWidget *parent)
 // an aspect-ratio bug can live.
 //
 // Runs on the OBS graphics thread. It must not look anything up.
+// Where the picture WOULD be when no source is feeding the display (a bay
+// that has played nothing is black). The overlay is still drawn there: the
+// operator reads the camera, the time and the REC dot off a bay whether or not
+// it has a picture. The canvas's aspect, letterboxed like the real thing.
+inline FitRect fallbackFit(uint32_t cx, uint32_t cy)
+{
+	obs_video_info ovi{};
+	float aspect = 16.0f / 9.0f;
+	if (obs_get_video_info(&ovi) && ovi.base_width > 0 && ovi.base_height > 0)
+		aspect = (float)ovi.base_width / (float)ovi.base_height;
+	int dw = (int)cx;
+	int dh = (int)((float)cx / aspect);
+	if (dh > (int)cy) {
+		dh = (int)cy;
+		dw = (int)((float)cy * aspect);
+	}
+	return FitRect{((int)cx - dw) / 2, ((int)cy - dh) / 2, dw, dh};
+}
+
 inline FitRect renderSourceFitted(obs_source_t *src, uint32_t cx, uint32_t cy)
 {
 	const uint32_t sw = obs_source_get_width(src);

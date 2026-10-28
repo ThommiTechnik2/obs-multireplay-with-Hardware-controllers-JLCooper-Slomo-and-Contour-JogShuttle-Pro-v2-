@@ -1029,9 +1029,13 @@ void MultiReplayDock::drawChannelA(void *data, uint32_t cx, uint32_t cy)
 		if (self->previewSource_)
 			src = obs_source_get_ref(self->previewSource_);
 	}
-	if (!src)
+	if (!src) {
+		self->overlayA_.draw(fallbackFit(cx, cy));
 		return;
-	const FitRect fit = renderSourceFitted(src, cx, cy);
+	}
+	FitRect fit = renderSourceFitted(src, cx, cy);
+	if (!fit.valid())
+		fit = fallbackFit(cx, cy);
 	self->overlayA_.draw(fit);
 	obs_source_release(src);
 }
@@ -1053,9 +1057,13 @@ void MultiReplayDock::drawChannelB(void *data, uint32_t cx, uint32_t cy)
 		if (self->previewSourceB_)
 			src = obs_source_get_ref(self->previewSourceB_);
 	}
-	if (!src)
+	if (!src) {
+		self->overlayB_.draw(fallbackFit(cx, cy));
 		return;
-	const FitRect fit = renderSourceFitted(src, cx, cy);
+	}
+	FitRect fit = renderSourceFitted(src, cx, cy);
+	if (!fit.valid())
+		fit = fallbackFit(cx, cy);
 	self->overlayB_.draw(fit);
 	obs_source_release(src);
 }
