@@ -36,7 +36,10 @@ namespace multireplay {
 
 // Planar layouts we can hand to OBS as-is. Keeping this neutral rather than
 // leaking AVPixelFormat means the OBS-facing code never includes FFmpeg.
-enum class FrameFormat { Unknown, I420, NV12, I422, I444 };
+// The 10-bit layouts are the ones OBS calls I010 (three planes, 4:2:0), P010
+// (two planes, 4:2:0) and I210 (three planes, 4:2:2): 16-bit little-endian
+// words holding 10 bits, which is what a HEVC/AV1 10-bit recording decodes to.
+enum class FrameFormat { Unknown, I420, NV12, I422, I444, I010, P010, I210 };
 
 enum class SampleFormat { Unknown, F32Planar, F32, S16 };
 

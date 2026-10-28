@@ -45,6 +45,15 @@ FrameFormat frameFormatFor(int avPixelFormat)
 	case AV_PIX_FMT_YUV444P:
 	case AV_PIX_FMT_YUVJ444P:
 		return FrameFormat::I444;
+	// 10 bit. A Branch Output branch recorded as HEVC with OBS's colour
+	// format set to P010 comes back as one of these; before they were mapped
+	// such a stream was refused as "unknown format".
+	case AV_PIX_FMT_YUV420P10LE:
+		return FrameFormat::I010;
+	case AV_PIX_FMT_P010LE:
+		return FrameFormat::P010;
+	case AV_PIX_FMT_YUV422P10LE:
+		return FrameFormat::I210;
 	default:
 		return FrameFormat::Unknown;
 	}

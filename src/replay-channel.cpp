@@ -165,6 +165,12 @@ video_format obsFormatFor(FrameFormat f)
 		return VIDEO_FORMAT_I422;
 	case FrameFormat::I444:
 		return VIDEO_FORMAT_I444;
+	case FrameFormat::I010:
+		return VIDEO_FORMAT_I010;
+	case FrameFormat::P010:
+		return VIDEO_FORMAT_P010;
+	case FrameFormat::I210:
+		return VIDEO_FORMAT_I210;
 	default:
 		return VIDEO_FORMAT_NONE;
 	}
@@ -179,11 +185,14 @@ uint32_t planeRows(FrameFormat f, int i, uint32_t height)
 	const uint32_t half = (height + 1) / 2;
 	switch (f) {
 	case FrameFormat::I420:
+	case FrameFormat::I010:
 		return i == 0 ? height : (i <= 2 ? half : 0);
 	case FrameFormat::NV12:
+	case FrameFormat::P010:
 		return i == 0 ? height : (i == 1 ? half : 0);
 	case FrameFormat::I422:
 	case FrameFormat::I444:
+	case FrameFormat::I210:
 		return i <= 2 ? height : 0;
 	default:
 		return 0;
