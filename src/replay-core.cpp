@@ -579,6 +579,31 @@ bool ReplayCore::startRecording(std::string &errorOut)
 				obs_source_get_filter_by_name(target, filterName.c_str());
 			if (!filter)
 				filter = branch_output::ensureFilter(target, i, config_);
+			if (filter && obsOutputIsTenBit()) {
+				// A filter made before OBS was switched to a 10-bit format
+				// still names an H.264 encoder, which refuses P010 and never
+				// starts. Fix only that one key, and only while the filter is
+				// still disarmed (nothing runs, so BO has nothing to restart).
+				obs_data_t *cur = obs_source_get_settings(filter);
+				const std::string enc =
+					cur ? obs_data_get_string(cur, "video_encoder") : "";
+				if (cur)
+					obs_data_release(cur);
+				if (!encoderSupportsTenBit(enc)) {
+					const std::string fixed = pickVideoEncoder();
+					if (encoderSupportsTenBit(fixed)) {
+						obs_data_t *patch = obs_data_create();
+						obs_data_set_string(patch, "video_encoder",
+								    fixed.c_str());
+						obs_source_update(filter, patch);
+						obs_data_release(patch);
+						obs_log(LOG_INFO,
+							"cam%d: OBS runs a 10-bit format, encoder '%s' "
+							"cannot record it - switched to '%s'",
+							i + 1, enc.c_str(), fixed.c_str());
+					}
+				}
+			}
 			if (filter) {
 				st.filterPresent = true;
 				branch_output::setEnabled(filter, true);
