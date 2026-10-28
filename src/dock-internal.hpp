@@ -41,6 +41,8 @@ including this.
 #include <QSizePolicy>
 #include <QString>
 #include <QStyle>
+#include <QPointer>
+#include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -189,7 +191,19 @@ inline void popupOnClick(QToolButton *b, QMenu *menu)
 {
 	b->setPopupMode(QToolButton::InstantPopup);
 	QObject::connect(b, &QToolButton::clicked, b, [b, menu]() {
-		menu->popup(b->mapToGlobal(QPoint(0, b->height())));
+		// A crash report showed QMenu::popup dereferencing a null platform
+		// window when a click was handled right as a long STOP finished.
+		// Pop up only from a clean event-loop turn, and only while the
+		// button's own top-level window still has a native window.
+		QPointer<QToolButton> guard(b);
+		QTimer::singleShot(0, b, [guard, menu]() {
+			if (!guard || !guard->isVisible())
+				return;
+			QWidget *top = guard->window();
+			if (!top || !top->windowHandle())
+				return;
+			menu->popup(guard->mapToGlobal(QPoint(0, guard->height())));
+		});
 	});
 }
 
