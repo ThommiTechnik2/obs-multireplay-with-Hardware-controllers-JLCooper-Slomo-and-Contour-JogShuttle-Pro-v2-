@@ -1088,9 +1088,14 @@ void MultiReplayDock::drawTile(void *data, uint32_t cx, uint32_t cy)
 		if (self->tileSource_[ctx->slot])
 			src = obs_source_get_ref(self->tileSource_[ctx->slot]);
 	}
-	if (!src)
+	if (!src) {
+		self->overlayTile_[ctx->slot].draw(fallbackFit(cx, cy));
 		return;
-	renderSourceFitted(src, cx, cy);
+	}
+	FitRect fit = renderSourceFitted(src, cx, cy);
+	if (!fit.valid())
+		fit = fallbackFit(cx, cy);
+	self->overlayTile_[ctx->slot].draw(fit);
 	obs_source_release(src);
 }
 
@@ -2502,7 +2507,9 @@ void MultiReplayDock::rebuildMultiview()
 		PreviewTile &t = tiles_[tileSlots[k]];
 		if (!t.box)
 			continue;
-		t.caption->setText(captions[(int)k]);
+		// The name is printed in the picture now (DisplayOverlay); the band
+		// under it is only the tally colour. The text stays as the tooltip.
+		t.caption->setText(QString());
 		t.caption->setToolTip(
 			t.cam0 >= 0 ? QString("%1 %2")
 					      .arg(obs_module_text("Dock.Angle"))

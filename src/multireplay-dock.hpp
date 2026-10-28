@@ -735,13 +735,13 @@ private:
 	// is twice the tiles' (24 px against 12), so the event, the position and
 	// the speed can be read from across a desk; everywhere else it is the one
 	// shared number.
-	static constexpr int kBayTagHOwnDock = 24;
+	static constexpr int kBayTagHOwnDock = 5;
 	int bayTagH() const
 	{
 		return monitorHost_ ? kBayTagHOwnDock : AspectBox::kTagH;
 	}
 	// ...and the camera tiles' band, 18 px there (the default 12 elsewhere).
-	static constexpr int kTileTagHOwnDock = 18;
+	static constexpr int kTileTagHOwnDock = 5;
 	int tileTagH() const
 	{
 		return monitorHost_ ? kTileTagHOwnDock : AspectBox::kTagH;
@@ -1664,6 +1664,7 @@ private:
 	// Filled by updatePictureOverlays() in poll; drawn by the draw callbacks.
 	DisplayOverlay overlayA_;
 	DisplayOverlay overlayB_;
+	std::array<DisplayOverlay, kMaxPreviewTiles> overlayTile_;
 	void updatePictureOverlays();
 
 	// --- THE FREE REVIEW: footage nobody marked ---------------------------
