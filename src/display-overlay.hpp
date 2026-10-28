@@ -17,9 +17,9 @@ Two threads, one rule each:
   * draw() runs on the graphics thread. It never touches Qt: it uploads a
     pending image as a texture (only when something changed) and draws sprites.
 
-The time of day changes every frame, so it is NOT re-rendered: one atlas with
-the digits and the colon is rendered once per size, and the time is composed
-from it character by character.
+The time of day changes every frame, so it is NOT re-rendered: eleven small images
+(digits and colon) are rendered once per size, and the time is composed from
+them character by character.
 */
 
 #pragma once
@@ -64,7 +64,8 @@ public:
 	void draw(const FitRect &r);
 
 private:
-	enum Slot { TopLeft, Dot, Name, Rate, Atlas, kSlots };
+	// Slots from Glyph0 on hold "0".."9" and ":", one small texture each.
+	enum Slot { TopLeft, Dot, Name, Rate, Glyph0, kSlots = Glyph0 + 11 };
 	struct Tex {
 		QImage pending; // set by the UI thread, consumed by draw()
 		bool dirty = false;
