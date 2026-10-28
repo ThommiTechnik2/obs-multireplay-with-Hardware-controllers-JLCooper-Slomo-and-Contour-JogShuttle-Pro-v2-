@@ -2190,6 +2190,10 @@ void MultiReplayDock::updatePictureOverlays()
 			instant = ch.positionNs();
 		if (instant != kNoInstant)
 			c.time = timeOfDay(instant);
+		else if (isActive)
+			// Nothing recorded yet: the bay shows the live picture, so it
+			// shows the live time of day, as the camera tiles do.
+			c.time = timeOfDay((int64_t)os_gettime_ns());
 
 		const int angle1 = ps.active && ps.angle1 > 0 ? ps.angle1
 							      : angle1_[(int)w];
