@@ -14,6 +14,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 #include <QPainter>
 #include <QPainterPath>
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace multireplay {
@@ -172,6 +173,7 @@ void DisplayOverlay::setContent(const Content &c, int pictureHeightPx)
 	const bool rName = sized || c.name != old.name;
 	const bool rRate = sized || c.rate != old.rate;
 	QImage iTl, iName, iRate, iDot, iAtlas;
+	std::array<QImage, 11> iGlyph;
 	int cw = 0, ch = 0;
 	if (rTl)
 		iTl = renderText(c.topLeft, px);
@@ -182,6 +184,12 @@ void DisplayOverlay::setContent(const Content &c, int pictureHeightPx)
 	if (sized) {
 		iDot = renderDot(px);
 		iAtlas = renderAtlas(px, &cw, &ch);
+		// One texture per character: gs_draw_sprite_subregion sizes the quad
+		// by the whole texture, so an atlas cannot be drawn cell by cell.
+		const int step = cw * kColonNum / kColonDen;
+		for (int i = 0; i < 10; i++)
+			iGlyph[i] = iAtlas.copy(i * cw, 0, cw, ch);
+		iGlyph[10] = iAtlas.copy(10 * cw + (cw - step) / 2, 0, step, ch);
 	}
 
 	std::lock_guard<std::mutex> lk(mu_);
@@ -193,7 +201,8 @@ void DisplayOverlay::setContent(const Content &c, int pictureHeightPx)
 		setImage(Rate, iRate);
 	if (sized) {
 		setImage(Dot, iDot);
-		setImage(Atlas, iAtlas);
+		for (int i = 0; i < 11; i++)
+			setImage((Slot)(Glyph0 + i), iGlyph[i]);
 		cellW_ = cw;
 		cellH_ = ch;
 		px_ = px;
@@ -250,25 +259,18 @@ void DisplayOverlay::draw(const FitRect &r)
 	gs_enable_blending(true);
 	gs_blend_function(GS_BLEND_ONE, GS_BLEND_INVSRCALPHA);
 
-	auto sprite = [&](gs_texture_t *tex, int x, int y, int w, int h,
-			  int sx, int sy, int sw, int sh) {
+	auto sprite = [&](gs_texture_t *tex, int x, int y, int w, int h) {
 		gs_effect_set_texture(image, tex);
 		while (gs_effect_loop(fx, "Draw")) {
 			gs_matrix_push();
 			gs_matrix_translate3f((float)x, (float)y, 0.0f);
-			if (sw > 0)
-				gs_draw_sprite_subregion(tex, 0, (uint32_t)sx,
-							 (uint32_t)sy,
-							 (uint32_t)sw,
-							 (uint32_t)sh);
-			else
-				gs_draw_sprite(tex, 0, (uint32_t)w, (uint32_t)h);
+			gs_draw_sprite(tex, 0, (uint32_t)w, (uint32_t)h);
 			gs_matrix_pop();
 		}
 	};
 	auto whole = [&](const Tex &t, int x, int y) {
 		if (t.tex)
-			sprite(t.tex, x, y, t.w, t.h, 0, 0, 0, 0);
+			sprite(t.tex, x, y, t.w, t.h);
 	};
 
 	// Top left: event id / camera number.
@@ -286,31 +288,24 @@ void DisplayOverlay::draw(const FitRect &r)
 		whole(t_[Rate], right - t_[Rate].w + padFor(px_),
 		      bottom - t_[Rate].h + padFor(px_));
 
-	// The time, composed from the atlas: digits step one cell, a colon
-	// steps 6/10 of one and is cut from the middle of its cell.
-	if (!cur_.time.isEmpty() && t_[Atlas].tex && cellW_ > 0) {
+	// The time, composed from the glyph textures: digits step one cell, a
+	// colon steps 6/10 of one.
+	if (!cur_.time.isEmpty() && t_[Glyph0].tex && cellW_ > 0) {
 		int x = left - padFor(px_);
 		const int y = bottom - cellH_ + padFor(px_);
 		for (const QChar c : cur_.time) {
-			const int idx = c == QLatin1Char(':')
-						? 10
-						: (c.unicode() >= '0' &&
-						   c.unicode() <= '9'
-							   ? (int)(c.unicode() - '0')
-							   : -1);
+			int idx = -1;
+			if (c == QLatin1Char(':'))
+				idx = 10;
+			else if (c.unicode() >= '0' && c.unicode() <= '9')
+				idx = (int)(c.unicode() - '0');
 			if (idx < 0)
 				continue;
-			if (idx == 10) {
-				const int step = cellW_ * kColonNum / kColonDen;
-				const int cut = (cellW_ - step) / 2;
-				sprite(t_[Atlas].tex, x, y, step, cellH_,
-				       idx * cellW_ + cut, 0, step, cellH_);
-				x += step;
-			} else {
-				sprite(t_[Atlas].tex, x, y, cellW_, cellH_,
-				       idx * cellW_, 0, cellW_, cellH_);
-				x += cellW_;
-			}
+			const Tex &g = t_[Glyph0 + idx];
+			if (!g.tex)
+				continue;
+			whole(g, x, y);
+			x += g.w;
 		}
 	}
 
