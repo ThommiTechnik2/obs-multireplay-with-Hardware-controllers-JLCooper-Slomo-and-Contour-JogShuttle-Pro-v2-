@@ -194,8 +194,18 @@ bool obs_module_load(void)
 	return true;
 }
 
+#ifdef __APPLE__
+// src/vt-realtime-encoder.c: Apple VT H.264/HEVC encoders with a RealTime
+// switch, registered next to the stock ones (EXPERIMENTAL).
+extern "C" void vtrt_register_encoders(void);
+#endif
+
 void obs_module_post_load(void)
 {
+#ifdef __APPLE__
+	vtrt_register_encoders();
+#endif
+
 	// Module load order is alphabetical: obs-multireplay loads BEFORE
 	// osi-branch-output, so the filter type only exists after all
 	// modules finished loading — check it here, not in obs_module_load.

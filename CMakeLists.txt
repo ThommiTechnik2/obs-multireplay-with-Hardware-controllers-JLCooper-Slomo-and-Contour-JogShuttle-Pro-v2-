@@ -183,6 +183,23 @@ target_sources(
     src/dock-icons.hpp
 )
 
+# macOS only: extra Apple VideoToolbox H.264/HEVC encoders with a RealTime
+# switch (EXPERIMENTAL, see the header of the file and OBS issue #13936). A
+# copy of OBS's own encoder, so it is built without warnings-as-errors: the
+# file is not ours to restyle, and a diff against upstream should stay small.
+if(APPLE)
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/vt-realtime-encoder.c)
+  set_source_files_properties(src/vt-realtime-encoder.c PROPERTIES COMPILE_OPTIONS "-w")
+  target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+      "$<LINK_LIBRARY:FRAMEWORK,CoreFoundation.framework>"
+      "$<LINK_LIBRARY:FRAMEWORK,CoreMedia.framework>"
+      "$<LINK_LIBRARY:FRAMEWORK,CoreVideo.framework>"
+      "$<LINK_LIBRARY:FRAMEWORK,VideoToolbox.framework>"
+  )
+endif()
+
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 
 # Linux: link the installed plugin into the folders OBS 33 and OBS's own .deb
