@@ -84,6 +84,15 @@ inline constexpr int64_t kAngleStallWarnMs = 2000;
 inline constexpr int64_t kAngleDeadMs = 5000;
 // Branch Output builds its infrastructure asynchronously; the tap retries.
 inline constexpr int64_t kAttachGraceMs = 10000;
+// Coming up is not the same as stalling. On an M3 Pro with eight hardware HEVC
+// encoders started in the same second, EVERY angle was silent for up to eight
+// seconds after REC and then delivered all of it at once: the ring held a
+// gapless 50 fps (packets == span x 50) and not one frame was lost. Reported as
+// "angle dead" that is a blocker on a take that was fine. The stall rules wait
+// this long after an angle was armed; an angle that has never produced a packet
+// is still caught by angle_no_packets above, and one that dies inside the
+// window is reported the moment the window ends.
+inline constexpr int64_t kStartupGraceMs = 20000;
 // OBS dropping frames is OBS's problem, but a replay rig is often what pushed
 // it over, so it is reported here too.
 //
@@ -111,7 +120,23 @@ inline constexpr int kLaggedWindowSamples = 5;
 // seconds, which no single burst can fake.
 inline constexpr int kLaggedSustainedWindows = 2;
 // Resident memory above ring + this much is a leak, not a buffer.
-inline constexpr int64_t kMemorySlackBytes = 768LL * 1024 * 1024;
+//
+// "This much" depends on how many encoders are running: each hardware encoder
+// brings its own frame pool and output queue, and none of that is ring. Two
+// measured takes with eight 1080p50 10-bit HEVC angles had 0.7 GB and 1.0 GB
+// of resident memory the ring did not account for, which a flat 768 MB called
+// a leak every single time. 512 MB + 128 MB per angle keeps the old figure for
+// two angles (768 MB) and gives eight angles 1.5 GB.
+inline constexpr int64_t kMemorySlackBaseBytes = 512LL * 1024 * 1024;
+inline constexpr int64_t kMemorySlackPerAngleBytes = 128LL * 1024 * 1024;
+inline constexpr int64_t memorySlackBytes(int armedAngles)
+{
+	return kMemorySlackBaseBytes +
+	       kMemorySlackPerAngleBytes * (armedAngles > 0 ? armedAngles : 0);
+}
+// The first seconds of a take allocate in bursts (encoder sessions, output
+// files, the first ring pages). The growth is judged once that has settled.
+inline constexpr int64_t kMemoryGraceMs = 60000;
 // A ring holding much less than it was budgeted for is being trimmed by the
 // byte cap — the operator reaches back 30 s and finds 12.
 inline constexpr int64_t kRingShortPct = 60;
@@ -415,6 +440,8 @@ inline std::vector<Finding> runtime(const RuntimeInput &in)
 		if (a.sinceLastPacketMs < 0) {
 			if (a.armedForMs > kAttachGraceMs)
 				add(Level::Warning, "angle_no_packets", cam);
+		} else if (a.armedForMs < kStartupGraceMs) {
+			// Still coming up: see kStartupGraceMs. Nothing to say yet.
 		} else if (a.sinceLastPacketMs >= kAngleDeadMs) {
 			// This angle has stopped. Everything else keeps running:
 			// one dead camera is not a dead take, and the operator
@@ -487,9 +514,14 @@ inline std::vector<Finding> runtime(const RuntimeInput &in)
 				    detail::mins(secs));
 	}
 
-	if (in.rssBytes > 0 && in.rssBaselineBytes > 0) {
+	if (in.rssBytes > 0 && in.rssBaselineBytes > 0 &&
+	    in.takeElapsedMs >= kMemoryGraceMs) {
+		int armedAngles = 0;
+		for (const AngleSample &a : in.angles)
+			if (a.armed)
+				armedAngles++;
 		const int64_t growth = in.rssBytes - in.rssBaselineBytes;
-		if (growth > in.ringBytesTotal + kMemorySlackBytes)
+		if (growth > in.ringBytesTotal + memorySlackBytes(armedAngles))
 			add(Level::Warning, "memory_growth",
 			    detail::gb(growth) + " over " +
 				    detail::gb(in.ringBytesTotal) + " of ring");

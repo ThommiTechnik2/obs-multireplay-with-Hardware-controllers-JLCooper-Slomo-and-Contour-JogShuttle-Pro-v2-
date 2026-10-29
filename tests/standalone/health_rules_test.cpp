@@ -426,12 +426,86 @@ static void test_memory_growth_is_measured_against_the_ring()
 	CHECK(!hasFinding(runtime(in), "memory_growth"));
 
 	// A gigabyte nobody can account for is.
-	in.rssBytes = in.rssBaselineBytes + 2LL * kGB + kMemorySlackBytes + kGB;
+	in.rssBytes = in.rssBaselineBytes + 2LL * kGB + memorySlackBytes(2) + kGB;
 	CHECK(hasFinding(runtime(in), "memory_growth"));
 
 	// Unmeasured resident size says nothing at all.
 	in.rssBytes = -1;
 	CHECK(!hasFinding(runtime(in), "memory_growth"));
+}
+
+static void test_memory_slack_grows_with_the_number_of_angles()
+{
+	// The old flat figure survives for two angles.
+	CHECK(memorySlackBytes(2) == 768LL * 1024 * 1024);
+	CHECK(memorySlackBytes(8) == 1536LL * 1024 * 1024);
+	CHECK(memorySlackBytes(0) == kMemorySlackBaseBytes);
+
+	// The measured case: eight angles, 1.0 GB of resident memory that is not
+	// ring. Fine for eight encoders, a leak for two.
+	RuntimeInput eight = healthyTake();
+	for (int i = 0; i < 8; i++) {
+		eight.angles[i].armed = true;
+		eight.angles[i].attached = true;
+		eight.angles[i].armedForMs = 60'000;
+		eight.angles[i].sinceLastPacketMs = 140;
+		eight.angles[i].ringSpanNs = 88'000'000'000LL;
+	}
+	eight.ringBytesTotal = 300LL * 1024 * 1024;
+	eight.rssBytes = eight.rssBaselineBytes + eight.ringBytesTotal + kGB;
+	CHECK(!hasFinding(runtime(eight), "memory_growth"));
+
+	RuntimeInput two = healthyTake();
+	two.ringBytesTotal = 300LL * 1024 * 1024;
+	two.rssBytes = two.rssBaselineBytes + two.ringBytesTotal + kGB;
+	CHECK(hasFinding(runtime(two), "memory_growth"));
+
+	// ...and a real leak is still one with eight.
+	eight.rssBytes = eight.rssBaselineBytes + eight.ringBytesTotal + 3 * kGB;
+	CHECK(hasFinding(runtime(eight), "memory_growth"));
+}
+
+static void test_memory_growth_waits_for_the_take_to_settle()
+{
+	RuntimeInput in = healthyTake();
+	in.ringBytesTotal = 100LL * 1024 * 1024;
+	// 0.9 GB over a nearly empty ring, ten seconds in: the encoders' own
+	// allocations, not a leak.
+	in.takeElapsedMs = 10'000;
+	in.rssBytes = in.rssBaselineBytes + 900LL * 1024 * 1024;
+	CHECK(!hasFinding(runtime(in), "memory_growth"));
+
+	// The same numbers once the grace is over are judged.
+	in.takeElapsedMs = kMemoryGraceMs;
+	CHECK(hasFinding(runtime(in), "memory_growth"));
+}
+
+static void test_a_coming_up_angle_is_not_a_dead_one()
+{
+	// Eight encoders starting together hold every angle silent for seconds,
+	// then deliver it all at once. Not a stall.
+	RuntimeInput in = healthyTake();
+	for (int i = 0; i < 2; i++) {
+		in.angles[i].armedForMs = 8000;
+		in.angles[i].sinceLastPacketMs = 6000; // would be angle_dead
+	}
+	CHECK(!hasFinding(runtime(in), "angle_dead"));
+	CHECK(!hasFinding(runtime(in), "angle_stalled"));
+	CHECK(runtime(in).empty());
+
+	// Never a packet at all is still reported, on its own clock.
+	in.angles[0].sinceLastPacketMs = -1;
+	in.angles[0].armedForMs = 12'000;
+	CHECK(hasFinding(runtime(in), "angle_no_packets"));
+
+	// An angle that went quiet inside the window is reported as soon as the
+	// window is over, not forgotten.
+	RuntimeInput late = healthyTake();
+	late.angles[1].armedForMs = kStartupGraceMs;
+	late.angles[1].sinceLastPacketMs = 6000;
+	CHECK(hasFinding(runtime(late), "angle_dead"));
+	late.angles[1].armedForMs = kStartupGraceMs - 1;
+	CHECK(!hasFinding(runtime(late), "angle_dead"));
 }
 
 static void test_disk_fills_up_during_the_take()
@@ -463,6 +537,9 @@ int main()
 	test_timeline_and_frame_drops();
 	test_ring_short_only_once_the_window_has_passed();
 	test_memory_growth_is_measured_against_the_ring();
+	test_memory_slack_grows_with_the_number_of_angles();
+	test_memory_growth_waits_for_the_take_to_settle();
+	test_a_coming_up_angle_is_not_a_dead_one();
 	test_disk_fills_up_during_the_take();
 
 	if (g_fail == 0)

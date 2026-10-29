@@ -4610,7 +4610,7 @@ void runSoakPass(int minutes, const std::string &outPath)
 	// judged against the ring plus the same slack the runtime rules use.
 	const bool memoryStable =
 		rssGrowthMb <=
-		ringPeakMb + health::kMemorySlackBytes / (1024 * 1024);
+		ringPeakMb + health::memorySlackBytes(armed) / (1024 * 1024);
 	const bool clean = malformed == 0 && discontinuities == 0;
 	// A duplicate slot (camera-dedup.hpp) writes no file of its own, so the
 	// file count is judged against the DISTINCT sources, not every slot.
